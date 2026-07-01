@@ -1,14 +1,25 @@
 /// <reference types="vite/client" />
 
-interface Window {
-  notasApi: {
-    loadNotes: () => Promise<Note[]>
-    saveNotes: (notes: Note[]) => Promise<void>
-  }
+interface Folder {
+  id: string
+  name: string
 }
 
 interface Note {
   id: string
   title: string
   content: string
+  folderId: string | null
+}
+
+interface AppData {
+  folders: Folder[]
+  notes: Note[]
+}
+
+interface Window {
+  notasApi: {
+    loadData: () => Promise<AppData | null>
+    saveData: (data: AppData) => Promise<void>
+  }
 }

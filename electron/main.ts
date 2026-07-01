@@ -25,26 +25,26 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-function getNotesFilePath() {
-  return path.join(app.getPath('userData'), 'notes.json')
+function getDataFilePath() {
+  return path.join(app.getPath('userData'), 'app-data.json')
 }
 
-async function loadNotes() {
+async function loadData() {
   try {
-    const raw = await fs.readFile(getNotesFilePath(), 'utf-8')
+    const raw = await fs.readFile(getDataFilePath(), 'utf-8')
     return JSON.parse(raw)
   } catch (err: any) {
-    if (err.code === 'ENOENT') return []
+    if (err.code === 'ENOENT') return null
     throw err
   }
 }
 
-async function saveNotes(notes: unknown) {
-  await fs.writeFile(getNotesFilePath(), JSON.stringify(notes, null, 2), 'utf-8')
+async function saveData(data: unknown) {
+  await fs.writeFile(getDataFilePath(), JSON.stringify(data, null, 2), 'utf-8')
 }
 
-ipcMain.handle('notas:load', () => loadNotes())
-ipcMain.handle('notas:save', (_event, notes) => saveNotes(notes))
+ipcMain.handle('notas:load', () => loadData())
+ipcMain.handle('notas:save', (_event, data) => saveData(data))
 
 let win: BrowserWindow | null
 

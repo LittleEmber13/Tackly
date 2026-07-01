@@ -1,5 +1,9 @@
 "use strict";
 const electron = require("electron");
+electron.contextBridge.exposeInMainWorld("notasApi", {
+  loadData: () => electron.ipcRenderer.invoke("notas:load"),
+  saveData: (data) => electron.ipcRenderer.invoke("notas:save", data)
+});
 electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args) {
     const [channel, listener] = args;

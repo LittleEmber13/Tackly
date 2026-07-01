@@ -1,7 +1,8 @@
-import { app, BrowserWindow } from "electron";
+import { ipcMain, app, BrowserWindow } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { promises } from "node:fs";
 createRequire(import.meta.url);
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname$1, "..");
@@ -9,6 +10,23 @@ const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
+function getDataFilePath() {
+  return path.join(app.getPath("userData"), "app-data.json");
+}
+async function loadData() {
+  try {
+    const raw = await promises.readFile(getDataFilePath(), "utf-8");
+    return JSON.parse(raw);
+  } catch (err) {
+    if (err.code === "ENOENT") return null;
+    throw err;
+  }
+}
+async function saveData(data) {
+  await promises.writeFile(getDataFilePath(), JSON.stringify(data, null, 2), "utf-8");
+}
+ipcMain.handle("notas:load", () => loadData());
+ipcMain.handle("notas:save", (_event, data) => saveData(data));
 let win;
 function createWindow() {
   win = new BrowserWindow({
