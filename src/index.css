@@ -69,3 +69,70 @@ body {
   justify-content: center;
   color: var(--color-text-muted);
 }
+
+.note-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+.note-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.note-item.selected {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.note-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-item-preview {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-item.selected .note-item-preview {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.editor-title {
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-size: 22px;
+  font-weight: 700;
+  padding: 20px 24px 0;
+  outline: none;
+  font-family: inherit;
+}
+
+.editor-content {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 16px 24px;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+}
