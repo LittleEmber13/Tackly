@@ -15,6 +15,24 @@ export default function App() {
     )
   }
 
+  function createNote() {
+    const newNote = {
+      id: crypto.randomUUID(),
+      title: 'Nueva nota',
+      content: ''
+    }
+    setNotes((prev) => [newNote, ...prev])
+    setSelectedId(newNote.id)
+  }
+
+  function deleteSelectedNote() {
+    if (!selectedNote) return
+    const confirmed = window.confirm(`¿Eliminar "${selectedNote.title}"?`)
+    if (!confirmed) return
+    setNotes((prev) => prev.filter((note) => note.id !== selectedId))
+    setSelectedId(null)
+  }
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -23,7 +41,12 @@ export default function App() {
       </aside>
 
       <section className="note-list">
-        <div className="note-list-header">Notas</div>
+        <div className="note-list-header">
+          <span>Notas</span>
+          <button className="btn-new-note" onClick={createNote}>
+            + Nueva
+          </button>
+        </div>
         <div className="note-list-content">
           {notes.map((note) => (
             <button
@@ -41,12 +64,17 @@ export default function App() {
       <main className="editor">
         {selectedNote ? (
           <>
-            <input
-              className="editor-title"
-              value={selectedNote.title}
-              onChange={(e) => updateSelectedNote('title', e.target.value)}
-              placeholder="Título"
-            />
+            <div className="editor-toolbar">
+              <input
+                className="editor-title"
+                value={selectedNote.title}
+                onChange={(e) => updateSelectedNote('title', e.target.value)}
+                placeholder="Título"
+              />
+              <button className="btn-delete-note" onClick={deleteSelectedNote}>
+                Eliminar
+              </button>
+            </div>
             <textarea
               className="editor-content"
               value={selectedNote.content}
