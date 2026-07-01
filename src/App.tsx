@@ -23,10 +23,18 @@ export default function App() {
   const [loaded, setLoaded] = useState(false)
   const [query, setQuery] = useState('')
   const [isPreview, setIsPreview] = useState(false)
+  const [theme, setTheme] = useState<'dark' | 'light'>(
+    () => (localStorage.getItem('notas-theme') as 'dark' | 'light') || 'dark'
+  )
   const [newFolderName, setNewFolderName] = useState<string | null>(null)
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null)
   const [renamingName, setRenamingName] = useState('')
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('notas-theme', theme)
+  }, [theme])
 
   useEffect(() => {
     window.notasApi.loadData().then((stored) => {
@@ -152,9 +160,18 @@ export default function App() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <span>Carpetas</span>
-          <button className="btn-new-note" onClick={createFolder}>
-            + Carpeta
-          </button>
+          <div className="sidebar-header-actions">
+            <button
+              className="btn-theme-toggle"
+              title="Cambiar tema"
+              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+            <button className="btn-new-note" onClick={createFolder}>
+              + Carpeta
+            </button>
+          </div>
         </div>
         <div className="sidebar-content">
           <button
