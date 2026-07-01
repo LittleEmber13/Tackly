@@ -59,10 +59,38 @@ body {
   border-bottom: 1px solid var(--color-border);
 }
 
+.search-box {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.search-box input {
+  width: 100%;
+  background: var(--color-bg-editor);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: var(--color-accent);
+}
+
 .sidebar-content,
 .note-list-content {
   flex: 1;
   overflow-y: auto;
+}
+
+.note-list-empty {
+  padding: 16px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  text-align: center;
 }
 
 .editor-empty {

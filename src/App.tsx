@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const DEFAULT_NOTES: Note[] = [
   {
@@ -12,6 +12,7 @@ export default function App() {
   const [notes, setNotes] = useState<Note[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [query, setQuery] = useState('')
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -29,6 +30,16 @@ export default function App() {
     }, 400)
     return () => clearTimeout(saveTimeout.current ?? undefined)
   }, [notes, loaded])
+
+  const filteredNotes = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return notes
+    return notes.filter(
+      (note) =>
+        note.title.toLowerCase().includes(q) ||
+        note.content.toLowerCase().includes(q)
+    )
+  }, [notes, query])
 
   const selectedNote = notes.find((note) => note.id === selectedId) ?? null
 
@@ -76,8 +87,19 @@ export default function App() {
             + Nueva
           </button>
         </div>
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="Buscar notas..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
         <div className="note-list-content">
-          {notes.map((note) => (
+          {filteredNotes.length === 0 && (
+            <div className="note-list-empty">No se encontraron notas</div>
+          )}
+          {filteredNotes.map((note) => (
             <button
               key={note.id}
               className={`note-item ${note.id === selectedId ? 'selected' : ''}`}
