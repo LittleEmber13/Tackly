@@ -1,9 +1,34 @@
-import { useState } from 'react'
-import { mockNotes } from './mockNotes'
+import { useEffect, useRef, useState } from 'react'
+
+const DEFAULT_NOTES: Note[] = [
+  {
+    id: crypto.randomUUID(),
+    title: 'Bienvenido a Notas',
+    content: 'Tus notas se guardan automáticamente en disco.'
+  }
+]
 
 export default function App() {
-  const [notes, setNotes] = useState(mockNotes)
+  const [notes, setNotes] = useState<Note[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    window.notasApi.loadNotes().then((stored) => {
+      setNotes(stored.length > 0 ? stored : DEFAULT_NOTES)
+      setLoaded(true)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!loaded) return
+    clearTimeout(saveTimeout.current ?? undefined)
+    saveTimeout.current = setTimeout(() => {
+      window.notasApi.saveNotes(notes)
+    }, 400)
+    return () => clearTimeout(saveTimeout.current ?? undefined)
+  }, [notes, loaded])
 
   const selectedNote = notes.find((note) => note.id === selectedId) ?? null
 
@@ -31,6 +56,10 @@ export default function App() {
     if (!confirmed) return
     setNotes((prev) => prev.filter((note) => note.id !== selectedId))
     setSelectedId(null)
+  }
+
+  if (!loaded) {
+    return <div className="editor-empty">Cargando notas...</div>
   }
 
   return (

@@ -1,5 +1,10 @@
 import { ipcRenderer, contextBridge } from 'electron'
 
+contextBridge.exposeInMainWorld('notasApi', {
+  loadNotes: () => ipcRenderer.invoke('notas:load'),
+  saveNotes: (notes: unknown) => ipcRenderer.invoke('notas:save', notes)
+})
+
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
