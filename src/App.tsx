@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { marked } from 'marked'
+import { marked, Renderer } from 'marked'
+import {
+  autoConvertTaskLines,
+  contentToEditorHtml,
+  handleBackspace,
+  handleEnter,
+  insertTaskLine,
+  serializeEditor,
+  taskLineRegex
+} from './hybridChecklistEditor'
 
 function defaultData(): AppData {
   return {
@@ -30,6 +39,8 @@ export default function App() {
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null)
   const [renamingName, setRenamingName] = useState('')
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const editorRef = useRef<HTMLDivElement | null>(null)
+  const taskCounter = useRef(0)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -74,10 +85,23 @@ export default function App() {
 
   const selectedNote = notes.find((note) => note.id === selectedId) ?? null
 
-  const previewHtml = useMemo(
-    () => (selectedNote ? marked.parse(selectedNote.content) as string : ''),
-    [selectedNote]
-  )
+  const taskRenderer = useMemo(() => {
+    const renderer = new Renderer()
+    renderer.checkbox = ({ checked }) =>
+      `<input type="checkbox" class="task-checkbox" data-task-index="${taskCounter.current++}"${checked ? ' checked' : ''} />`
+    return renderer
+  }, [])
+
+  const previewHtml = useMemo(() => {
+    if (!selectedNote) return ''
+    taskCounter.current = 0
+    return marked.parse(selectedNote.content, { renderer: taskRenderer }) as string
+  }, [selectedNote, taskRenderer])
+
+  useEffect(() => {
+    if (isPreview || !editorRef.current || !selectedNote) return
+    editorRef.current.innerHTML = contentToEditorHtml(selectedNote.content)
+  }, [selectedId, isPreview])
 
   function updateSelectedNote(field: string, value: string) {
     setNotes((prev) =>
@@ -85,6 +109,69 @@ export default function App() {
         note.id === selectedId ? { ...note, [field]: value } : note
       )
     )
+  }
+
+  function toggleTaskCheckbox(index: number) {
+    if (!selectedNote) return
+    let count = -1
+    const newContent = selectedNote.content
+      .split('\n')
+      .map((line) => {
+        const match = line.match(taskLineRegex)
+        if (!match) return line
+        count++
+        if (count !== index) return line
+        const toggled = match[2] === ' ' ? 'x' : ' '
+        return `${match[1]}${toggled}${match[3]}`
+      })
+      .join('\n')
+    updateSelectedNote('content', newContent)
+  }
+
+  function handlePreviewClick(e: React.MouseEvent<HTMLDivElement>) {
+    const target = e.target as HTMLElement
+    if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+      const index = target.dataset.taskIndex
+      if (index !== undefined) toggleTaskCheckbox(Number(index))
+    }
+  }
+
+  function syncEditorContent() {
+    if (!editorRef.current) return
+    updateSelectedNote('content', serializeEditor(editorRef.current))
+  }
+
+  function handleEditorInput() {
+    if (!editorRef.current) return
+    autoConvertTaskLines(editorRef.current)
+    syncEditorContent()
+  }
+
+  function handleEditorClick(e: React.MouseEvent<HTMLDivElement>) {
+    const target = e.target as HTMLElement
+    if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+      requestAnimationFrame(syncEditorContent)
+    }
+  }
+
+  function handleEditorKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (!editorRef.current) return
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleEnter(editorRef.current)
+      syncEditorContent()
+    } else if (e.key === 'Backspace') {
+      if (handleBackspace(editorRef.current)) {
+        e.preventDefault()
+        syncEditorContent()
+      }
+    }
+  }
+
+  function insertTaskItem() {
+    if (!editorRef.current) return
+    insertTaskLine(editorRef.current)
+    syncEditorContent()
   }
 
   function selectNote(id: string) {
@@ -281,6 +368,15 @@ export default function App() {
                 onChange={(e) => updateSelectedNote('title', e.target.value)}
                 placeholder="Título"
               />
+              {!isPreview && (
+                <button
+                  className="btn-new-note"
+                  onClick={insertTaskItem}
+                  title="Insertar lista de tareas"
+                >
+                  ☑ Tarea
+                </button>
+              )}
               <button
                 className="btn-delete-note"
                 onClick={() => setIsPreview((v) => !v)}
@@ -294,14 +390,18 @@ export default function App() {
             {isPreview ? (
               <div
                 className="editor-preview"
+                onClick={handlePreviewClick}
                 dangerouslySetInnerHTML={{ __html: previewHtml }}
               />
             ) : (
-              <textarea
-                className="editor-content"
-                value={selectedNote.content}
-                onChange={(e) => updateSelectedNote('content', e.target.value)}
-                placeholder="Escribe aquí... (admite markdown)"
+              <div
+                ref={editorRef}
+                className="editor-content editor-content-hybrid"
+                contentEditable
+                suppressContentEditableWarning
+                onInput={handleEditorInput}
+                onClick={handleEditorClick}
+                onKeyDown={handleEditorKeyDown}
               />
             )}
           </>

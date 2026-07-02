@@ -270,6 +270,29 @@ body {
   font-family: inherit;
 }
 
+.editor-content-hybrid {
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.editor-content-hybrid .task-line {
+  display: flex;
+  align-items: flex-start;
+}
+
+.editor-content-hybrid .task-line input.task-checkbox {
+  margin-top: 5px;
+  margin-right: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.editor-content-hybrid .task-line:has(input.task-checkbox:checked) {
+  text-decoration: line-through;
+  color: var(--color-text-secondary, #888);
+}
+
 .editor-toolbar {
   display: flex;
   align-items: center;
@@ -329,4 +352,20 @@ body {
   display: block;
   padding: 10px;
   overflow-x: auto;
+}
+
+.editor-preview li:has(> input.task-checkbox) {
+  list-style: none;
+  margin-left: -20px;
+}
+
+.editor-preview input.task-checkbox {
+  margin-right: 6px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.editor-preview li:has(> input.task-checkbox:checked) {
+  text-decoration: line-through;
+  color: var(--color-text-secondary, #888);
 }
