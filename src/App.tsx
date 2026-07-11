@@ -38,6 +38,7 @@ export default function App() {
   const [newFolderName, setNewFolderName] = useState<string | null>(null)
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null)
   const [renamingName, setRenamingName] = useState('')
+  const [noteMenu, setNoteMenu] = useState<{ x: number; y: number; noteId: string } | null>(null)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const editorRef = useRef<HTMLDivElement | null>(null)
   const taskCounter = useRef(0)
@@ -64,6 +65,19 @@ export default function App() {
     }, 400)
     return () => clearTimeout(saveTimeout.current ?? undefined)
   }, [folders, notes, loaded])
+
+  useEffect(() => {
+    if (!noteMenu) return
+    const close = () => setNoteMenu(null)
+    window.addEventListener('click', close)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('click', close)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [noteMenu])
 
   const notesInFolder = useMemo(
     () =>
@@ -197,6 +211,40 @@ export default function App() {
     if (!confirmed) return
     setNotes((prev) => prev.filter((note) => note.id !== selectedId))
     setSelectedId(null)
+  }
+
+  function openNoteMenu(e: React.MouseEvent, noteId: string) {
+    e.preventDefault()
+    setNoteMenu({ x: e.clientX, y: e.clientY, noteId })
+  }
+
+  function duplicateNote(id: string) {
+    setNoteMenu(null)
+    const original = notes.find((note) => note.id === id)
+    if (!original) return
+    const copy: Note = {
+      ...original,
+      id: crypto.randomUUID(),
+      title: `${original.title} (copia)`
+    }
+    setNotes((prev) => {
+      const index = prev.findIndex((note) => note.id === id)
+      const next = [...prev]
+      next.splice(index + 1, 0, copy)
+      return next
+    })
+    setSelectedId(copy.id)
+    setIsPreview(false)
+  }
+
+  function deleteNote(id: string) {
+    setNoteMenu(null)
+    const note = notes.find((n) => n.id === id)
+    if (!note) return
+    const confirmed = window.confirm(`¿Eliminar "${note.title}"?`)
+    if (!confirmed) return
+    setNotes((prev) => prev.filter((n) => n.id !== id))
+    if (selectedId === id) setSelectedId(null)
   }
 
   function createFolder() {
@@ -350,6 +398,7 @@ export default function App() {
               key={note.id}
               className={`note-item ${note.id === selectedId ? 'selected' : ''}`}
               onClick={() => selectNote(note.id)}
+              onContextMenu={(e) => openNoteMenu(e, note.id)}
             >
               <div className="note-item-title">{note.title}</div>
               <div className="note-item-preview">{note.content}</div>
@@ -409,6 +458,24 @@ export default function App() {
           <div className="editor-empty">Selecciona o crea una nota</div>
         )}
       </main>
+
+      {noteMenu && (
+        <div
+          className="context-menu"
+          style={{ top: noteMenu.y, left: noteMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button className="context-menu-item" onClick={() => duplicateNote(noteMenu.noteId)}>
+            Duplicar
+          </button>
+          <button
+            className="context-menu-item context-menu-item-danger"
+            onClick={() => deleteNote(noteMenu.noteId)}
+          >
+            Eliminar
+          </button>
+        </div>
+      )}
     </div>
   )
 }
