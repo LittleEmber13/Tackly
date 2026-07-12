@@ -2,7 +2,9 @@
 const electron = require("electron");
 electron.contextBridge.exposeInMainWorld("notasApi", {
   loadData: () => electron.ipcRenderer.invoke("notas:load"),
-  saveData: (data) => electron.ipcRenderer.invoke("notas:save", data)
+  saveData: (data) => electron.ipcRenderer.invoke("notas:save", data),
+  selectDirectory: () => electron.ipcRenderer.invoke("tackly:selectDirectory"),
+  getDataDir: () => electron.ipcRenderer.invoke("tackly:getDataDir")
 });
 electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args) {
@@ -21,6 +23,4 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
     const [channel, ...omit] = args;
     return electron.ipcRenderer.invoke(channel, ...omit);
   }
-  // You can expose other APTs you need here.
-  // ...
 });

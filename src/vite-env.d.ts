@@ -15,11 +15,14 @@ interface Note {
 interface AppData {
   folders: Folder[]
   notes: Note[]
+  theme?: 'dark' | 'light'
 }
 
 interface Window {
   notasApi: {
     loadData: () => Promise<AppData | null>
     saveData: (data: AppData) => Promise<void>
+    selectDirectory: () => Promise<string | null>
+    getDataDir: () => Promise<string>
   }
 }

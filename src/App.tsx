@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { marked, Renderer } from 'marked'
 import {
   autoConvertTaskLines,
@@ -20,7 +20,8 @@ function defaultData(): AppData {
         content: 'Tus notas se guardan automáticamente en disco.\n\nSoporta **markdown**.',
         folderId: null
       }
-    ]
+    ],
+    theme: 'dark'
   }
 }
 
@@ -39,6 +40,8 @@ export default function App() {
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null)
   const [renamingName, setRenamingName] = useState('')
   const [noteMenu, setNoteMenu] = useState<{ x: number; y: number; noteId: string } | null>(null)
+  const [dataDir, setDataDir] = useState('')
+  const [changingDir, setChangingDir] = useState(false)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const editorRef = useRef<HTMLDivElement | null>(null)
   const taskCounter = useRef(0)
@@ -53,18 +56,20 @@ export default function App() {
       const data = stored ?? defaultData()
       setFolders(data.folders)
       setNotes(data.notes)
+      if (data.theme) setTheme(data.theme)
       setLoaded(true)
     })
+    window.notasApi.getDataDir().then((dir) => setDataDir(dir))
   }, [])
 
   useEffect(() => {
     if (!loaded) return
     clearTimeout(saveTimeout.current ?? undefined)
     saveTimeout.current = setTimeout(() => {
-      window.notasApi.saveData({ folders, notes })
+      window.notasApi.saveData({ folders, notes, theme })
     }, 400)
     return () => clearTimeout(saveTimeout.current ?? undefined)
-  }, [folders, notes, loaded])
+  }, [folders, notes, theme, loaded])
 
   useEffect(() => {
     if (!noteMenu) return
@@ -286,6 +291,25 @@ export default function App() {
     if (selectedFolderId === folder.id) setSelectedFolderId(null)
   }
 
+  const handleChangeDirectory = useCallback(async () => {
+    setChangingDir(true)
+    try {
+      const selected = await window.notasApi.selectDirectory()
+      if (selected) {
+        setDataDir(selected)
+        const stored = await window.notasApi.loadData()
+        const data = stored ?? defaultData()
+        setFolders(data.folders)
+        setNotes(data.notes)
+        if (data.theme) setTheme(data.theme)
+        setSelectedId(null)
+        setSelectedFolderId(null)
+      }
+    } finally {
+      setChangingDir(false)
+    }
+  }, [])
+
   if (!loaded) {
     return <div className="editor-empty">Cargando notas...</div>
   }
@@ -371,6 +395,17 @@ export default function App() {
               />
             </div>
           )}
+        </div>
+        <div className="sidebar-footer">
+          <button
+            className="btn-data-dir"
+            onClick={handleChangeDirectory}
+            disabled={changingDir}
+            title={dataDir || 'Seleccionar carpeta de datos'}
+          >
+            {changingDir ? '...' : '📂 Cambiar carpeta'}
+          </button>
+          {dataDir && <div className="data-dir-path">{dataDir}</div>}
         </div>
       </aside>
 

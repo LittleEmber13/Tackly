@@ -405,3 +405,45 @@ body {
   background: #c0392b;
   color: #fff;
 }
+
+.sidebar-footer {
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-data-dir {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-data-dir:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.btn-data-dir:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.data-dir-path {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.7;
+}

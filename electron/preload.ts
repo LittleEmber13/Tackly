@@ -2,7 +2,9 @@ import { ipcRenderer, contextBridge } from 'electron'
 
 contextBridge.exposeInMainWorld('notasApi', {
   loadData: () => ipcRenderer.invoke('notas:load'),
-  saveData: (data: unknown) => ipcRenderer.invoke('notas:save', data)
+  saveData: (data: unknown) => ipcRenderer.invoke('notas:save', data),
+  selectDirectory: () => ipcRenderer.invoke('tackly:selectDirectory'),
+  getDataDir: () => ipcRenderer.invoke('tackly:getDataDir')
 })
 
 // --------- Expose some API to the Renderer process ---------
@@ -23,7 +25,4 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     const [channel, ...omit] = args
     return ipcRenderer.invoke(channel, ...omit)
   },
-
-  // You can expose other APTs you need here.
-  // ...
 })
