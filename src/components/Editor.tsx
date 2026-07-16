@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { marked, Renderer } from 'marked'
+import { useNotesStore } from '../store'
 import {
   autoConvertTaskLines,
   contentToEditorHtml,
@@ -12,11 +13,12 @@ import {
 
 interface EditorProps {
   note: Note
-  onChange: (patch: Partial<Note>) => void
-  onDelete: () => void
 }
 
-export function Editor({ note, onChange, onDelete }: EditorProps) {
+export function Editor({ note }: EditorProps) {
+  const updateNote = useNotesStore((s) => s.updateNote)
+  const deleteNote = useNotesStore((s) => s.deleteNote)
+
   const [isPreview, setIsPreview] = useState(false)
   const editorRef = useRef<HTMLDivElement | null>(null)
   const taskCounter = useRef(0)
@@ -38,9 +40,13 @@ export function Editor({ note, onChange, onDelete }: EditorProps) {
     editorRef.current.innerHTML = contentToEditorHtml(note.content)
   }, [note.id, isPreview])
 
+  function change(patch: Partial<Note>) {
+    updateNote(note.id, patch)
+  }
+
   function syncEditorContent() {
     if (!editorRef.current) return
-    onChange({ content: serializeEditor(editorRef.current) })
+    change({ content: serializeEditor(editorRef.current) })
   }
 
   function toggleTaskCheckbox(index: number) {
@@ -56,7 +62,7 @@ export function Editor({ note, onChange, onDelete }: EditorProps) {
         return `${match[1]}${toggled}${match[3]}`
       })
       .join('\n')
-    onChange({ content: newContent })
+    change({ content: newContent })
   }
 
   function handlePreviewClick(e: React.MouseEvent<HTMLDivElement>) {
@@ -100,13 +106,17 @@ export function Editor({ note, onChange, onDelete }: EditorProps) {
     syncEditorContent()
   }
 
+  function confirmDelete() {
+    if (window.confirm(`¿Eliminar "${note.title}"?`)) deleteNote(note.id)
+  }
+
   return (
     <>
       <div className="editor-toolbar">
         <input
           className="editor-title"
           value={note.title}
-          onChange={(e) => onChange({ title: e.target.value })}
+          onChange={(e) => change({ title: e.target.value })}
           placeholder="Título"
         />
         {!isPreview && (
@@ -121,7 +131,7 @@ export function Editor({ note, onChange, onDelete }: EditorProps) {
         <button className="btn-delete-note" onClick={() => setIsPreview((v) => !v)}>
           {isPreview ? 'Editar' : 'Vista previa'}
         </button>
-        <button className="btn-delete-note" onClick={onDelete}>
+        <button className="btn-delete-note" onClick={confirmDelete}>
           Eliminar
         </button>
       </div>

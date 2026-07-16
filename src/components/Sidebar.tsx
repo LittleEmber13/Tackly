@@ -1,38 +1,25 @@
 import { useState } from 'react'
+import { useNotesStore } from '../store'
 
-interface SidebarProps {
-  theme: 'dark' | 'light'
-  onToggleTheme: () => void
-  folders: Folder[]
-  selectedFolderId: string | null
-  onSelectFolder: (id: string | null) => void
-  onCreateFolder: (name: string) => void
-  onRenameFolder: (id: string, name: string) => void
-  onDeleteFolder: (folder: Folder) => void
-  dataDir: string
-  changingDir: boolean
-  onChangeDirectory: () => void
-}
+export function Sidebar() {
+  const folders = useNotesStore((s) => s.folders)
+  const selectedFolderId = useNotesStore((s) => s.selectedFolderId)
+  const theme = useNotesStore((s) => s.theme)
+  const dataDir = useNotesStore((s) => s.dataDir)
+  const changingDir = useNotesStore((s) => s.changingDir)
+  const toggleTheme = useNotesStore((s) => s.toggleTheme)
+  const selectFolder = useNotesStore((s) => s.selectFolder)
+  const createFolder = useNotesStore((s) => s.createFolder)
+  const renameFolder = useNotesStore((s) => s.renameFolder)
+  const deleteFolder = useNotesStore((s) => s.deleteFolder)
+  const changeDirectory = useNotesStore((s) => s.changeDirectory)
 
-export function Sidebar({
-  theme,
-  onToggleTheme,
-  folders,
-  selectedFolderId,
-  onSelectFolder,
-  onCreateFolder,
-  onRenameFolder,
-  onDeleteFolder,
-  dataDir,
-  changingDir,
-  onChangeDirectory
-}: SidebarProps) {
   const [newFolderName, setNewFolderName] = useState<string | null>(null)
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null)
   const [renamingName, setRenamingName] = useState('')
 
   function commitNewFolder() {
-    if (newFolderName && newFolderName.trim()) onCreateFolder(newFolderName.trim())
+    if (newFolderName && newFolderName.trim()) createFolder(newFolderName.trim())
     setNewFolderName(null)
   }
 
@@ -43,9 +30,16 @@ export function Sidebar({
 
   function commitRenameFolder() {
     if (renamingFolderId && renamingName.trim()) {
-      onRenameFolder(renamingFolderId, renamingName.trim())
+      renameFolder(renamingFolderId, renamingName.trim())
     }
     setRenamingFolderId(null)
+  }
+
+  function confirmDeleteFolder(folder: Folder) {
+    const confirmed = window.confirm(
+      `¿Eliminar la carpeta "${folder.name}"? Las notas pasarán a "Todas las notas".`
+    )
+    if (confirmed) deleteFolder(folder.id)
   }
 
   return (
@@ -53,7 +47,7 @@ export function Sidebar({
       <div className="sidebar-header">
         <span>Carpetas</span>
         <div className="sidebar-header-actions">
-          <button className="btn-theme-toggle" title="Cambiar tema" onClick={onToggleTheme}>
+          <button className="btn-theme-toggle" title="Cambiar tema" onClick={toggleTheme}>
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
           <button className="btn-new-note" onClick={() => setNewFolderName('')}>
@@ -64,7 +58,7 @@ export function Sidebar({
       <div className="sidebar-content">
         <button
           className={`folder-item ${selectedFolderId === null ? 'selected' : ''}`}
-          onClick={() => onSelectFolder(null)}
+          onClick={() => selectFolder(null)}
         >
           Todas las notas
         </button>
@@ -72,7 +66,7 @@ export function Sidebar({
           <div
             key={folder.id}
             className={`folder-item ${selectedFolderId === folder.id ? 'selected' : ''}`}
-            onClick={() => onSelectFolder(folder.id)}
+            onClick={() => selectFolder(folder.id)}
           >
             {renamingFolderId === folder.id ? (
               <input
@@ -104,7 +98,7 @@ export function Sidebar({
                     title="Eliminar"
                     onClick={(e) => {
                       e.stopPropagation()
-                      onDeleteFolder(folder)
+                      confirmDeleteFolder(folder)
                     }}
                   >
                     ×
@@ -134,7 +128,7 @@ export function Sidebar({
       <div className="sidebar-footer">
         <button
           className="btn-data-dir"
-          onClick={onChangeDirectory}
+          onClick={changeDirectory}
           disabled={changingDir}
           title={dataDir || 'Seleccionar carpeta de datos'}
         >

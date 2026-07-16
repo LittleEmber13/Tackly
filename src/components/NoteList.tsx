@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react'
+import { useNotesInFolder, useNotesStore } from '../store'
 
-interface NoteListProps {
-  notes: Note[]
-  selectedId: string | null
-  onSelect: (id: string) => void
-  onContextMenu: (e: React.MouseEvent, id: string) => void
-  onCreate: () => void
-}
+export function NoteList() {
+  const notes = useNotesInFolder()
+  const selectedNoteId = useNotesStore((s) => s.selectedNoteId)
+  const selectNote = useNotesStore((s) => s.selectNote)
+  const createNote = useNotesStore((s) => s.createNote)
+  const openNoteMenu = useNotesStore((s) => s.openNoteMenu)
 
-export function NoteList({ notes, selectedId, onSelect, onContextMenu, onCreate }: NoteListProps) {
   const [query, setQuery] = useState('')
 
   const filteredNotes = useMemo(() => {
@@ -24,7 +23,7 @@ export function NoteList({ notes, selectedId, onSelect, onContextMenu, onCreate 
     <section className="note-list">
       <div className="note-list-header">
         <span>Notas</span>
-        <button className="btn-new-note" onClick={onCreate}>
+        <button className="btn-new-note" onClick={createNote}>
           + Nueva
         </button>
       </div>
@@ -43,9 +42,12 @@ export function NoteList({ notes, selectedId, onSelect, onContextMenu, onCreate 
         {filteredNotes.map((note) => (
           <button
             key={note.id}
-            className={`note-item ${note.id === selectedId ? 'selected' : ''}`}
-            onClick={() => onSelect(note.id)}
-            onContextMenu={(e) => onContextMenu(e, note.id)}
+            className={`note-item ${note.id === selectedNoteId ? 'selected' : ''}`}
+            onClick={() => selectNote(note.id)}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              openNoteMenu({ x: e.clientX, y: e.clientY, noteId: note.id })
+            }}
           >
             <div className="note-item-title">{note.title}</div>
             <div className="note-item-preview">{note.content}</div>
